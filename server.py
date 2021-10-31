@@ -13,7 +13,7 @@ P_DEFAULT = 3
 
 @flask_app.route('/hello', methods=['GET', 'POST'])
 def welcome():
-    return "Hello, world."
+    return jsonify({'data': "Hello, world " + str(args.n)})
 
 if __name__=='__main__':
 
