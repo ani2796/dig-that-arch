@@ -1,10 +1,11 @@
-from flask import Flask, json, jsonify, request
+from flask import Flask, jsonify, request
+from flask_socketio import SocketIO
 import argparse
 
-import requests
-
-
 flask_app = Flask(__name__)
+flask_app.config['SECRET_KEY'] = 'secret'
+socketio = SocketIO(flask_app)
+
 hostname = '0.0.0.0'
 port = 8080
 
@@ -16,6 +17,10 @@ P_DEFAULT = 3
 # Keeping tabs on tunneler and detector
 tunneler = {}
 detector = {}
+
+@socketio.on('message')
+def handle_message(data):
+    print("Received message: " + data)
 
 @flask_app.route('/registration', methods=['GET'])
 def register():
@@ -37,6 +42,10 @@ def register():
     if(role == "Tunneler"):     tunneler["reg"] = name
     elif(role == "Detector"):   detector["reg"] = name
 
+    if("reg" in tunneler and "reg" in detector):
+        # Tunneler's initial phase starts here
+        start_game()
+    
     return jsonify({
         "n": args.n,
         "k": args.k,
@@ -48,7 +57,11 @@ def print_wait():
         print("Waiting for tunneler to register")
     elif(not "reg" in detector):
         print("Waiting for detector to register")
-    
+
+def start_game():
+    print("Game has begun\n")
+    # Start the tunneler's timer here
+
 if __name__=='__main__':
 
     # Parsing CL args to get grid, tunnel and phases params
@@ -60,4 +73,4 @@ if __name__=='__main__':
     
 
     print_wait()
-    flask_app.run(host = hostname, port = port)
+    socketio.run(flask_app, host = hostname, port = port)

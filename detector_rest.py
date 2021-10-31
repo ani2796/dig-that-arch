@@ -1,8 +1,18 @@
 import requests
+from flask import Flask
 from requests.exceptions import HTTPError
+from flask_socketio import SocketIO, send
+
+flask_app = Flask(__name__)
+flask_app.config['SECRET_KEY'] = 'secret'
+socketio = SocketIO(flask_app)
 
 url = 'http://0.0.0.0:8080/'
 reg = 'registration'
+
+@socketio.on('message')
+def handle_message(message):
+    send(message)
 
 class Detector:
     def __init__(self, name) -> None:
@@ -10,7 +20,6 @@ class Detector:
         params = dict({
             'name': name,
             'role': role
-            
         })
         try:
             reg_url = url + reg
@@ -24,3 +33,4 @@ class Detector:
 
 if __name__ == '__main__':
     detector = Detector("DetectorClient")
+
