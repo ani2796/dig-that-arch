@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, json, jsonify
 import argparse
 
 
@@ -13,7 +13,7 @@ P_DEFAULT = 3
 
 @flask_app.route('/hello', methods=['GET', 'POST'])
 def welcome():
-    return "Hello, world."
+    return jsonify({'data': "Hello, world."})
 
 if __name__=='__main__':
 
