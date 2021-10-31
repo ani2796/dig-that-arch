@@ -6,9 +6,10 @@ reg = 'registration'
 
 class Detector:
     def __init__(self, name) -> None:
+        role = self.__class__.__name__
         params = dict({
             'name': name,
-            'role': self.__class__
+            'role': role
             
         })
         try:

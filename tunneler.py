@@ -8,7 +8,7 @@ class Tunneler:
     def __init__(self, name) -> None:
         params = dict({
             'name': name,
-            'role': self.__class__
+            'role': self.__class__.__name__
         })
         try:
             reg_url = url + reg
