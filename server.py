@@ -1,4 +1,4 @@
-from flask import Flask, json, jsonify
+from flask import Flask, jsonify, request
 import argparse
 
 
@@ -11,9 +11,14 @@ N_DEFAULT = 5
 K_DEFAULT = 9
 P_DEFAULT = 3
 
-@flask_app.route('/hello', methods=['GET', 'POST'])
-def welcome():
-    return jsonify({'data': "Hello, world."})
+@flask_app.route('/registration', methods=['GET'])
+def register():
+    print("Registering name: ", request.args.get("name"))
+    return jsonify({
+        "n": args.n,
+        "k": args.k,
+        "p": args.p
+    })
 
 if __name__=='__main__':
 
