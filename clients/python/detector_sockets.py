@@ -21,7 +21,7 @@ async def detect_tunnel():
             # Insert your code here
 
             # Sample guess containing edges and vertices
-            guess = json.dumps({"edges": [[(0, 1), (0, 0)], [(0, 1), (1, 1)], [(1, 3), (1, 2)]], "vertices": [(1, 1), (2, 3)]})
+            guess = json.dumps({"name": client_name, "edges": [[(0, 1), (0, 0)], [(0, 1), (1, 1)], [(1, 3), (1, 2)]], "vertices": [(1, 1), (2, 3)]})
             
             # Getting back the nodes from the server that match the tunneler's path
             await websocket.send(guess)
