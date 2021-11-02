@@ -95,3 +95,26 @@ Once the results of each guess has been returned to the detector client, it's ti
 ```
 
 Then the final score is displayed.
+
+
+**Note:** The "viz" folder contains a browser implementation of the game. The viz part is being integrated with the server architecture.
+
+For clients using Python, a few requirements need to be installed. Run the following command:
+```bash
+pip install -r requirements.txt
+```
+
+For clients using Java, the below maven dependencies are required (for JSON-Simple and java-websocket):
+```
+<dependency>
+    <groupId>com.googlecode.json-simple</groupId>
+    <artifactId>json-simple</artifactId>
+    <version>1.1.1</version>
+</dependency>
+
+<dependency>
+  <groupId>org.java-websocket</groupId>
+  <artifactId>Java-WebSocket</artifactId>
+  <version>1.5.2</version>
+</dependency>
+```
