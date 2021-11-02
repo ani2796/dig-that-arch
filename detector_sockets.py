@@ -1,26 +1,38 @@
 import asyncio
 import websockets
 import json
-import time
 
-hostname = "0.0.0.0"
-port = 8080
+hostname = "127.0.0.1"
+port = 8081
+client_name = "PythonClient"
 
+# Detecting tunnel
 async def detect_tunnel():
     async with websockets.connect("ws://" + hostname + ":" + str(port)) as websocket:
-        await websocket.send(json.dumps({"name": "PythonClient2", "role": "Detector"}))
-        start_msg = json.loads(await websocket.recv())
+        await websocket.send(json.dumps({"name": client_name, "role": "Detector"}))
+        params = json.loads(await websocket.recv())
+        print("Params recvd from server:" + str(params))
 
-        for i in range(1, start_msg["p"] + 1):
+        for i in range(1, params["p"] + 1):
+            # Receiving round number from server
             round = json.loads(await websocket.recv())
             print("Round: " + str(round))
+
+            # Insert your code here
+
+            # Sample guess containing edges and vertices
             guess = json.dumps({"edges": [[(0, 1), (0, 0)], [(0, 1), (1, 1)], [(1, 3), (1, 2)]], "vertices": [(1, 1), (2, 3)]})
-            time.sleep(1)
+            
+            # Getting back the nodes from the server that match the tunneler's path
             await websocket.send(guess)
             result = json.loads(await websocket.recv())
-            print("Evaluated result for round: " + str(result))
+        
 
-        final_guess = json.dumps({"edges": [[(0, 0), (0, 1)], [(0, 1), (1, 1)], [(1, 1), (1, 2)], [(1, 2), (2, 2)], [(2, 2), (3, 3)]]})
+        # Insert your code here
+
+        # Sending final guess to the server
+        final_guess = json.dumps({"edges": [[(0, 0), (0, 1)], [(0, 1), (1, 1)], [(1, 1), (1, 2)], [(1, 2), (2, 2)], [(2, 2), (2, 3)]]})
         await websocket.send(final_guess)
 
-asyncio.get_event_loop().run_until_complete(detect_tunnel())
+
+asyncio.run(detect_tunnel())
