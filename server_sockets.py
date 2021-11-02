@@ -3,7 +3,7 @@ import websockets
 import argparse
 import json
 import time
-
+import math
 from server_rest import register
 
 
@@ -17,21 +17,10 @@ P_DEFAULT = 3
 
 tunneler = {}
 detector = {}
-connected = set()
 args = None
-
-async def echo(websocket, path):
-    async for message in websocket:
-        await websocket.send(message)
-
-async def hello(websocket, path):
-    name = await websocket.recv()
-    print(f"<<< {name}")
-
-    greeting = f"Hello, {name}."
-
-    await websocket.send(greeting)
-    print(f"<<< {greeting}")
+vertices_dict = {}
+edges_list = []
+guesses_dict = {"edges": [], "vertices": []}
     
 async def main():
     # Parsing command line args
@@ -54,15 +43,25 @@ async def evaluator(websocket, path):
 
     if(role == "Tunneler"):
         start_msg = json.dumps({"canStart": True, "n": args.n, "k": args.k, "p": args.p})
-        await websocket.send(start_msg)
-        # start timer here
-        path_msg = json.loads(await websocket.recv())
-        # stop timer here
-        print("Message sent by tunneler: " + str(path_msg))
+        tunneling_done = False
+        while(not tunneling_done):
+            await websocket.send(start_msg)
+            # start timer here
+            path_msg = json.loads(await websocket.recv())
+            # stop timer here
+            print("Message sent by tunneler: " + str(path_msg))
+            if(path_validate(path_msg)):
+                tunneling_done = True
+            else:
+                global vertices_dict, edge_list
+                vertices_dict = {}
+                edge_list = []
+        print("Tunneling done, no more waiting")
 
     elif(role == "Detector"):
         start_msg = json.dumps({"n": args.n, "k": args.k, "p": args.p})
         await websocket.send(start_msg)
+        final_score = 0
 
         for i in range(1, args.p + 1):
             round_msg = json.dumps({"round": i})
@@ -70,15 +69,141 @@ async def evaluator(websocket, path):
             #start timer here
             guess = json.loads(await websocket.recv())
             # stop timer here
-            # evaluate guess
+
             print("Detector sent guess: " + str(guess))
-            result = json.dumps({"edge": True})
-            await websocket.send(result)
+            return_msg, score = guess_validate_and_score(guess)
+
+            print("Return message:")
+            print(str(return_msg["correct_edges"]))
+            print(str(return_msg["correct_vertices"]))
+            final_score += score
+
+            await websocket.send(json.dumps(return_msg))
+        
+        final_guess = json.loads(await websocket.recv())
+        correct = valid(final_guess)
+        if(not correct): 
+            final_score = math.inf
+        print("Hence the final score is: " + str(final_score))
+
+def valid(final_guess):
+    edges_list_copy = [ele for ele in edges_list]
+    for guess_edge in final_guess["edges"]:
+        for edge in edges_list:
+            if(equal_edges(edge, guess_edge)):
+                edges_list_copy.remove(edge)
+    
+    if(edges_list_copy == []):
+        return True
+    return False
+
+def guess_validate_and_score(guess):
+    guess_score = 0
+    return_msg = {"correct_edges": [], "correct_vertices": []}
+    if "edges" in guess:
+        valid_edge_guesses = add_guess_edges(guess["edges"])
+        guess_score += len(valid_edge_guesses)
+        print("Valid guesses this time: " + str(valid_edge_guesses) + " length: " + str(guess_score))
+
+    if "vertices" in guess:
+         add_guess_vertices(guess["vertices"])
+
+    for edge_guess in valid_edge_guesses:
+        if(in_path(edge_guess)):
+            return_msg["correct_edges"].append(edge_guess)
+    print("Correct edges: " + str(return_msg["correct_edges"]))
+
+    return return_msg, guess_score
+
+def in_path(guess_edge):
+    for edge in edges_list:
+        if(equal_edges(edge, guess_edge)):
+            return True
+    return False
+
+def add_guess_edges(guess_edges):
+    valid_guesses = []
+    for guess_edge in guess_edges:
+        if(not already_guessed(guess_edge) and is_valid_edge(guess_edge)):
+            valid_guesses.append(guess_edge)
+            guesses_dict["edges"].append(guess_edge)
+    return valid_guesses
+
+def already_guessed(guess_edge):
+    for edge in guesses_dict["edges"]:
+        if(equal_edges(edge, guess_edge)):
+            return True
+    return False
+
+def equal_edges(edge1, edge2):
+    if((edge1[0][0] == edge2[0][0] and edge1[0][1] == edge2[0][1]) and 
+        (edge1[1][0] == edge2[1][0] and edge1[1][1] == edge2[1][1])):
+        return True
+    elif((edge1[0][0] == edge2[1][0] and edge1[0][1] == edge2[1][1]) and
+        (edge1[1][0] == edge2[0][0] and edge1[1][1] == edge2[0][1])):
+        return True
+    return False
+
+def add_guess_vertices(guess_vertices):
+    for guess_vertex in guess_vertices:
+        guesses_dict["vertices"].append(guess_vertex)
 
 def path_validate(path_msg):
-    points = path_msg["edges"]
-    print("Edge data: " + str(points))
-    return True
+    edges = path_msg["edges"]
+    edge_count = 0
+    middle_vertex_count = 0
+    v_on_top = False
+    v_on_bottom = False
+    within_limits = True
+    valid_edges = True
+
+    print("Edge data: " + str(edges))
+    for edge in edges:
+        edge_count += 1
+        valid_edges = valid_edges and is_valid_edge(edge)
+
+        if(not (edge[0][0], edge[0][1]) in vertices_dict):
+            vertices_dict[(edge[0][0], edge[0][1])] = 1
+        else:
+            vertices_dict[(edge[0][0], edge[0][1])] += 1
+        
+        if(not (edge[1][0], edge[1][1]) in vertices_dict):
+            vertices_dict[(edge[1][0], edge[1][1])] = 1
+        else:
+            vertices_dict[(edge[1][0], edge[1][1])] += 1
+        
+    print("number of edges:" + str(edge_count))
+    print("n value:" + str(args.n))
+
+    for key, value in vertices_dict.items():
+        if(not(key[0]<= args.n and key[1] <= args.n)): within_limits = False
+        if(key[1] == 0 and value == 1): v_on_bottom = True
+        if(key[1] == args.n and value == 1): v_on_top = True
+        if(value == 2): middle_vertex_count += 1
+
+    print("\n\nWithin limits? " + str(within_limits))
+    print("Edge count: " + str(edge_count) + " args.k: " + str(args.k))
+    print("v on bottom: " + str(v_on_bottom) + " v on top: " + str(v_on_top))
+    print("middle vertex count: " + str(middle_vertex_count) + " len vertices_dict: " + str(len(vertices_dict)))
+    print("Valid edges? " + str(valid_edges) + "\n")
+
+    if(within_limits and 
+        edge_count <= args.k and 
+        v_on_bottom and v_on_top and 
+        middle_vertex_count == (len(vertices_dict)-2) and
+        valid_edges):
+        print("This looks like a valid path...\n")
+        global edges_list
+        edges_list = edges
+        return True
+    else:
+        print("Sorry buddy, invalid path...\n")
+        return False
+
+def is_valid_edge(edge):
+    if(abs(edge[0][0] - edge[1][0]) + abs(edge[0][1] - edge[1][1]) == 1):
+        return True
+    return False
 
 def register_clients(message):
     data = json.loads(message)
