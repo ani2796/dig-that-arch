@@ -23,6 +23,7 @@ guesses_dict = {"edges": [], "vertices": []}
 time_tunneler = 0
 time_detector = 0
 tunneling_done = False
+driver = webdriver.Firefox()
 
 # Main function
 async def main():
@@ -34,8 +35,12 @@ async def main():
     parser.add_argument("--view", help = "View the game on a browser window", action="store_true")
     parser.add_argument("--host", help = "Host IP address of the server", type = str, default = HOSTNAME_DEFAULT)
     parser.add_argument("--port", help = "Host port number", type = int, default = PORT_DEFAULT)
-
     global args
+
+    if(args.view):
+        print("Opening viz")
+        driver.get("./viz/iframe.html")
+        
     args = parser.parse_args()
     print("Done parsing args")
 
