@@ -4,14 +4,13 @@ import argparse
 import json
 import time
 import math
-from selenium import webdriver
 
 # Some default game params
-N_DEFAULT = 5
+N_DEFAULT = 3
 K_DEFAULT = 9
 P_DEFAULT = 3
 HOSTNAME_DEFAULT = "127.0.0.1"
-PORT_DEFAULT = 8080
+PORT_DEFAULT = 8081
 
 # Some variables maintaining game state
 tunneler = {}
@@ -23,7 +22,6 @@ guesses_dict = {"edges": [], "vertices": []}
 time_tunneler = 0
 time_detector = 0
 tunneling_done = False
-driver = webdriver.Firefox()
 
 # Main function
 async def main():
@@ -37,12 +35,12 @@ async def main():
     parser.add_argument("--port", help = "Host port number", type = int, default = PORT_DEFAULT)
     global args
 
-    if(args.view):
-        print("Opening viz")
-        driver.get("./viz/iframe.html")
-        
     args = parser.parse_args()
     print("Done parsing args")
+
+    if(args.view):
+        print("Opening viz")
+        
 
     # Running evaluator forever
     async with websockets.serve(evaluator, args.host, args.port):
