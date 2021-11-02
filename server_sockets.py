@@ -21,6 +21,8 @@ args = None
 vertices_dict = {}
 edges_list = []
 guesses_dict = {"edges": [], "vertices": []}
+time_tunneler = 0
+time_detector = 0
     
 async def main():
     # Parsing command line args
@@ -37,6 +39,8 @@ async def main():
 
 async def evaluator(websocket, path):    
     init_msg = json.loads(await websocket.recv())
+    global time_tunneler, time_detector
+
     print("Initial message: " + str(init_msg))
     role = init_msg["role"]
     name = init_msg["name"]
@@ -46,10 +50,15 @@ async def evaluator(websocket, path):
         tunneling_done = False
         while(not tunneling_done):
             await websocket.send(start_msg)
-            # start timer here
+            
+            start = time.time()
             path_msg = json.loads(await websocket.recv())
-            # stop timer here
+            end = time.time()
+
+            time_tunneler += end - start
+            print("Time taken by the tunneler: " + str(time_tunneler))
             print("Message sent by tunneler: " + str(path_msg))
+
             if(path_validate(path_msg)):
                 tunneling_done = True
             else:
@@ -66,9 +75,13 @@ async def evaluator(websocket, path):
         for i in range(1, args.p + 1):
             round_msg = json.dumps({"round": i})
             await websocket.send(round_msg)
-            #start timer here
+
+            start = time.time()
             guess = json.loads(await websocket.recv())
-            # stop timer here
+            end = time.time()
+            time_detector += end - start
+
+            print("Time taken by the detector: " + str(time_detector))
 
             print("Detector sent guess: " + str(guess))
             return_msg, score = guess_validate_and_score(guess)
@@ -103,19 +116,34 @@ def guess_validate_and_score(guess):
     if "edges" in guess:
         valid_edge_guesses = add_guess_edges(guess["edges"])
         guess_score += len(valid_edge_guesses)
-        print("Valid guesses this time: " + str(valid_edge_guesses) + " length: " + str(guess_score))
+        print("Valid edge guesses this time: " + str(valid_edge_guesses) + " score: " + str(guess_score))
 
     if "vertices" in guess:
-         add_guess_vertices(guess["vertices"])
+         valid_vertex_guesses = add_guess_vertices(guess["vertices"])
+         guess_score += len(valid_vertex_guesses)
+         print("Valid vertex guesses this time: " + str(valid_vertex_guesses) + " score " + str(guess_score))
 
-    for edge_guess in valid_edge_guesses:
-        if(in_path(edge_guess)):
-            return_msg["correct_edges"].append(edge_guess)
+    for guess_edge in valid_edge_guesses:
+        if(edge_in_path(guess_edge)):
+            return_msg["correct_edges"].append(guess_edge)
+
+    for guess_vertex in valid_vertex_guesses:
+        if(vertex_in_path(guess_vertex)):
+            return_msg["correct_vertices"].append(guess_vertex)
+
     print("Correct edges: " + str(return_msg["correct_edges"]))
 
     return return_msg, guess_score
 
-def in_path(guess_edge):
+def vertex_in_path(guess_vertex):
+    for edge in edges_list:
+        v1 = edge[0]
+        v2 = edge[1]
+        if(equal_vertices(v1, guess_vertex) or equal_vertices(v2, guess_vertex)):
+            return True
+    return False 
+
+def edge_in_path(guess_edge):
     for edge in edges_list:
         if(equal_edges(edge, guess_edge)):
             return True
@@ -124,15 +152,20 @@ def in_path(guess_edge):
 def add_guess_edges(guess_edges):
     valid_guesses = []
     for guess_edge in guess_edges:
-        if(not already_guessed(guess_edge) and is_valid_edge(guess_edge)):
+        if(not already_guessed_edge(guess_edge) and is_valid_edge(guess_edge)):
             valid_guesses.append(guess_edge)
             guesses_dict["edges"].append(guess_edge)
     return valid_guesses
 
-def already_guessed(guess_edge):
+def already_guessed_edge(guess_edge):
     for edge in guesses_dict["edges"]:
         if(equal_edges(edge, guess_edge)):
             return True
+    return False
+
+def equal_vertices(vertex1, vertex2):
+    if(vertex1[0] == vertex2[0] and vertex1[1] == vertex2[1]):
+        return True
     return False
 
 def equal_edges(edge1, edge2):
@@ -145,8 +178,18 @@ def equal_edges(edge1, edge2):
     return False
 
 def add_guess_vertices(guess_vertices):
+    valid_guesses = []
     for guess_vertex in guess_vertices:
-        guesses_dict["vertices"].append(guess_vertex)
+        if(not already_guessed_vertex(guess_vertex)):
+            valid_guesses.append(guess_vertex)
+            guesses_dict["vertices"].append(guess_vertex)
+    return valid_guesses
+
+def already_guessed_vertex(guess_vertex):
+    for vertex in guesses_dict["vertices"]:
+        if equal_vertices(guess_vertex, vertex):
+            return True
+    return False
 
 def path_validate(path_msg):
     edges = path_msg["edges"]
