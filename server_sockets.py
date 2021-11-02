@@ -4,6 +4,7 @@ import argparse
 import json
 import time
 import math
+from selenium import webdriver
 
 # Some default game params
 N_DEFAULT = 5
