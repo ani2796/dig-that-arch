@@ -119,6 +119,6 @@ For clients using Java, the below maven dependencies are required (for JSON-Simp
 </dependency>
 ```
 
-To report any bugs or for any inquiries, feel free to contact us via email:
-Anirudh Sriram (as9913@nyu.edu)
-Kamila Zaman (kz2137@nyu.edu)
+To report any bugs or for any inquiries, feel free to contact us via email:  
+Anirudh Sriram (as9913@nyu.edu)  
+Kamila Zaman (kz2137@nyu.edu)  
