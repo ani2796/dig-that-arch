@@ -100,8 +100,6 @@ async def evaluator(websocket, path):
         print("It's the tunneler's turn, cannot detect yet...")
 
     elif(role == "Detector" and tunneling_done):
-        start_msg = json.dumps({"n": args.n, "k": args.k, "p": args.p})
-        await websocket.send(start_msg)
         final_score = 0
 
         for i in range(1, args.p + 1):
@@ -116,7 +114,7 @@ async def evaluator(websocket, path):
             print("Time taken by the detector: " + str(time_detector))
 
             print("Detector sent guess: " + str(guess))
-            return_msg, score = guess_validate_and_score(guess)
+            return_msg, score = guess_validate_and_score_2(guess)
 
             #print("Return message:")
             #print(str(return_msg["correct_edges"]))
@@ -142,6 +140,33 @@ def valid(final_guess):
     if(edges_list_copy == []):
         return True
     return False
+
+def guess_validate_and_score_2(guess):
+    guess_score = 0
+    temp = []
+    return_msg = {"correct_edges": []}
+    if "vertices" in guess:
+        valid_vertex_guesses = add_guess_vertices(guess["vertices"])
+        guess_score += len(valid_vertex_guesses)
+
+    for guess_vertex in valid_vertex_guesses:
+        for edge in edges_list:
+            v1 = edge[0]
+            v2 = edge[1]
+            if(equal_vertices(v1, guess_vertex) or equal_vertices(v2, guess_vertex)):
+                temp.append(edge)
+    
+    for edge in temp:
+        already_exists = False
+        for correct_edge in return_msg["correct_edges"]:
+            if(equal_edges(edge, correct_edge)):
+                already_exists = True
+                break
+        if(not already_exists):
+            return_msg["correct_edges"].append(edge)
+
+    return return_msg, guess_score
+    
 
 # Considering valid edge and vertex guesses (within range and not guessed before)
 def guess_validate_and_score(guess):
