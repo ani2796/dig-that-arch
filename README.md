@@ -5,9 +5,9 @@ Architecture for the "Dig That!" game - Heuristic Problem Solving
 
 The game is designed largely in websockets and JSON. The player sends and receives messages in a particular order, as described below.
 
-First, the Tunneler connects to the server and sends a message with the player name and their role. Then the tunneler receives a JSON containing the parameters of the game - namely, the values of n (grid size), k (maximum path length) and p (number of phases). Then the tunneler must dig his tunnel and send the corresponding co-ordinates to the server. If the path is invalid, the server will send a JSON stating that the path is invalid and the client must resend their path.
+First, the Tunneler connects to the server and sends a message with the player name and their role. Then the tunneler receives a JSON containing the parameters of the game - namely, the values of n (grid size in terms of edges), k (maximum path length) and p (number of phases). Then the tunneler must dig his tunnel and send the corresponding co-ordinates to the server. If the path is invalid, the server will send a JSON stating that the path is invalid and the client must resend their path.
 
-Next, the Detector will connect to the server, and receive the same JSON containing parameters as described above. Then, the detector, in each of the p phases, must send a list of edges and vertices that he wants to probe. The server will then return a list of vertices and edges that coincide with the tunneler's path. Once all the phases are over, the client must send a list of edges as its final guess.
+Next, the Detector will connect to the server, and receive the same JSON containing parameters as described above. Then, in each of the p phases, the detector must send a list of vertices (intersections) that he wants to probe. The server will then return a list of edges in the tunneler's path that coincide with the tunneler's path. Once all the phases are over, the client must send a list of edges as its final guess.
 
 As described on the website, the final score is the number of unique probes that the detector has used to identify the tunneler's path. Each team will play as both the tunneler and the detector and the team with the lowest score wins!
 
@@ -76,15 +76,13 @@ In each round, the detector must send the following format of JSON:
 ```json
 {
 "name": "DetectorClient", 
-"edges": [[(0, 1), (0, 0)], [(0, 1), (1, 1)], [(1, 3), (1, 2)]], 
 "vertices": [(1, 1), (2, 3)]
 }
 ```
-After the guess has been evaluated, the vertices and edges matching the path are returned to the client:
+After the guess has been evaluated, the edges matching the path are returned to the client:
 ```json
 {
-"correct_edges": [(0, 1), (0, 0)], [(0, 1), (1, 1)]],
-"correct_vertices": [(1, 1), (2, 3)]
+"correct_edges": [(0, 1), (0, 0)], [(0, 1), (1, 1)]]
 }
 ```
 Once the results of each guess has been returned to the detector client, it's time for the final guess, which should look like this:
