@@ -108,7 +108,7 @@
             <transition name="fade">
                 <div id="edgeInfo" v-if="showEdgeInfo()">
                     <h2>Max edges: {{maxEdge()}} Edges left: {{edgeLeft()}} Isvalid: {{isValid()}}</h2>
-                    <button class="large ui blue basic button" v-on:click="gotoDetect()">I finished my tunnel</button>
+                    <button class="large ui blue basic button" id="finished_tunneling" v-on:click="gotoDetect()">I finished my tunnel</button>
                     <button class="large ui red basic button" v-on:click="clearBoard()">Clear and start again</button>
                 </div>
             </transition>
@@ -119,13 +119,13 @@
             <transition name="fade">
                 <div id="guessInfo" v-if="showGuessInfo()">
                     <h2>Guess round {{guessRound}} of 3</h2>
-                    <button class="large ui basic green button" v-on:click="finishPrepare()">Finish this Round</button>
+                    <button class="large ui basic green button" id="finish_round" v-on:click="finishPrepare()">Finish this Round</button>
                 </div>
             </transition>
 
             <transition name="fade">
                 <div id="finishGuess" v-if="showFinishGuessInfo()">
-                    <button class="large ui basic green button" v-on:click="finishGuess()">Finish Guess</button>
+                    <button class="large ui basic green button" id="finish_final_guess" v-on:click="finishGuess()">Finish Guess</button>
                 </div>
             </transition>
         </div>

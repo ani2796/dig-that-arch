@@ -190,13 +190,16 @@ var game = new Vue({
         },
 
         gotoDetect: function(){
-            if(Tunnel.isValid(this.size)) {
-                Map.clearBoard();
-                this.gameStatus = "node/edge detection";
-                alert("It's guess round now");
-            } else {
-                alert("Your tunnel is invalid. It must start on the top edge, end on the bottom edge, and be a single simple path.");
-            }
+            Map.clearBoard();
+            this.gameStatus = "node/edge detection";
+            alert("It's guess round now");
+            // if(Tunnel.isValid(this.size)) {
+            //     Map.clearBoard();
+            //     this.gameStatus = "node/edge detection";
+            //     alert("It's guess round now");
+            // } else {
+            //     alert("Your tunnel is invalid. It must start on the top edge, end on the bottom edge, and be a single simple path.");
+            // }
         },
 
         isValid: function () {

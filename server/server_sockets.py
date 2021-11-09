@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 import os
 
 # Some default game params
-N_DEFAULT = 4
+N_DEFAULT = 5
 K_DEFAULT = 9
 P_DEFAULT = 3
 HOSTNAME_DEFAULT = "127.0.0.1"
@@ -25,10 +25,12 @@ guesses_dict = {"edges": [], "vertices": []}
 time_tunneler = 0
 time_detector = 0
 tunneling_done = False
-driver = webdriver.Firefox(executable_path='../viz/geckodriver')
+driver = None
 
 # Main function
 async def main():
+    global driver
+
     # Parsing command line args
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", help = "Size of grid", type = int, default = N_DEFAULT)
@@ -47,6 +49,7 @@ async def main():
     # For given grid size, the value of max path length is fixed
     if(args.view):
         print("Opening viz")
+        driver = webdriver.Firefox(executable_path='../viz/geckodriver')
         driver.get("file:///" + os.getcwd() + "/../viz/iframe.html")
         driver.find_element(By.ID, "grid-size").click()
         driver.find_element(By.ID, "size-" + str(args.n)).click()
@@ -58,7 +61,7 @@ async def main():
     async with websockets.serve(evaluator, args.host, args.port):
         await asyncio.Future()
 
-def draw_tunnel(path):
+def draw_tunnel(path, isFinal = False):
     global driver
     print("path was valid, here it is:" + str(path))
 
@@ -74,9 +77,22 @@ def draw_tunnel(path):
             html_id = "vedge-" + str(edge_trans[1][0]) + "-" + str(edge_trans[1][1])
         elif(orientation == "vfwd"):
             html_id = "vedge-" + str(edge_trans[0][0]) + "-" + str(edge_trans[0][1])
-        print("path edge transformed:" + orientation + html_id)
+        # print("path edge transformed:" + orientation + html_id)
         driver.find_element(By.ID, html_id).click()
-    driver.find(By.ID, "")
+
+    if(not(isFinal)):
+        driver.find_element(By.ID, "finished_tunneling").click()
+        driver.switch_to.alert.accept()
+
+def draw_guess(guess, round):
+    global driver
+    for vertex in guess["vertices"]:
+        vertex_trans = translate_vertex(vertex)
+        html_id = "node-" + str(vertex_trans[0]) + "-" + str(vertex_trans[1])
+        driver.find_element(By.ID, html_id).click()
+
+    driver.find_element(By.ID, "finish_round").click()
+    
 
 def h_or_v(edge):
     if(edge[0][0] - edge[1][0] == 1):
@@ -138,7 +154,7 @@ async def evaluator(websocket, path):
             # If not a valid path, refreshing variables and waiting for another message
             if(path_validate(path_msg)):
                 if(args.view):
-                    draw_tunnel(path_msg)
+                    draw_tunnel(path_msg, isFinal=False)
                 tunneling_done = True
             else:
                 global vertices_dict, edge_list
@@ -169,6 +185,8 @@ async def evaluator(websocket, path):
             print("Detector sent guess: " + str(guess))
             return_msg, score = guess_validate_and_score_2(guess)
 
+            if(args.view):
+                draw_guess(guess, i)
             #print("Return message:")
             #print(str(return_msg["correct_edges"]))
             #print(str(return_msg["correct_vertices"]))
@@ -176,8 +194,15 @@ async def evaluator(websocket, path):
 
             await websocket.send(json.dumps(return_msg))
         
+        driver.switch_to.alert.accept()
+        
         final_guess = json.loads(await websocket.recv())
+
         correct = valid(final_guess)
+        if(args.view):
+            draw_tunnel(final_guess, isFinal=True)
+            driver.find_element(By.ID, "finish_final_guess").click()
+
         if(not correct): 
             final_score = math.inf
         print("Hence the final score is: " + str(final_score))
@@ -343,6 +368,12 @@ def path_validate(path_msg):
         if(key[1] == args.n and value == 1): v_on_top = True
         if(value == 2): middle_vertex_count += 1
 
+    print("Within limits: " + str(within_limits))
+    print("Edge count: " + str(edge_count) + " args.k: " + str(args.k))
+    print("Middle vertex count: " + str(middle_vertex_count))
+    print("vertices dictionary:" + str(vertices_dict))
+    print("valid edges: " + str(valid_edges))
+    
     if(within_limits and 
         edge_count <= args.k and 
         v_on_bottom and v_on_top and 
@@ -357,7 +388,9 @@ def path_validate(path_msg):
         return False
 
 def is_valid_edge(edge):
-    if(abs(edge[0][0] - edge[1][0]) + abs(edge[0][1] - edge[1][1]) == 1):
+    if((abs(edge[0][0] - edge[1][0]) + abs(edge[0][1] - edge[1][1]) == 1) and 
+        (edge[0][0] >= 0 and edge[1][0] >= 0 and edge[0][1] >= 0 and edge[1][1] >= 0) and 
+        (edge[0][0] <= args.n and edge[1][0] <= args.n and edge[0][1] <= args.n and edge[1][1] <= args.n)):
         return True
     return False
 

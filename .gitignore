@@ -2,3 +2,4 @@ dig-that-dev
 __pycache__
 geckodriver.log
 **/.DS_Store
+/submissions/
