@@ -76,6 +76,7 @@ def draw_tunnel(path):
             html_id = "vedge-" + str(edge_trans[0][0]) + "-" + str(edge_trans[0][1])
         print("path edge transformed:" + orientation + html_id)
         driver.find_element(By.ID, html_id).click()
+    driver.find(By.ID, "")
 
 def h_or_v(edge):
     if(edge[0][0] - edge[1][0] == 1):
