@@ -194,7 +194,8 @@ async def evaluator(websocket, path):
 
             await websocket.send(json.dumps(return_msg))
         
-        driver.switch_to.alert.accept()
+        if(args.view):
+            driver.switch_to.alert.accept()
         
         final_guess = json.loads(await websocket.recv())
 
