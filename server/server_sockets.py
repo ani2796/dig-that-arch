@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 import os
 
 # Some default game params
-N_DEFAULT = 5
+N_DEFAULT = 4
 K_DEFAULT = 9
 P_DEFAULT = 3
 HOSTNAME_DEFAULT = "127.0.0.1"
@@ -41,24 +41,64 @@ async def main():
 
     args = parser.parse_args()
     print("Done parsing args")
-
-    print("Opening viz")
-    driver.get("file:///" + os.getcwd() + "/../viz/iframe.html")
-    driver.find_element(By.ID, "grid-size").click()
-    driver.find_element(By.ID, "size-" + str(args.n)).click()
-
-    driver.find_element(By.ID, "start-game").click()
-    driver.switch_to.alert.accept()
     
-    exit()
+    # Notes about visualization:
+    # Cannot visualize grid size less than 4
+    # For given grid size, the value of max path length is fixed
+    if(args.view):
+        print("Opening viz")
+        driver.get("file:///" + os.getcwd() + "/../viz/iframe.html")
+        driver.find_element(By.ID, "grid-size").click()
+        driver.find_element(By.ID, "size-" + str(args.n)).click()
+
+        driver.find_element(By.ID, "start-game").click()
+        driver.switch_to.alert.accept()
 
     # Running evaluator forever
     async with websockets.serve(evaluator, args.host, args.port):
         await asyncio.Future()
 
+def draw_tunnel(path):
+    global driver
+    print("path was valid, here it is:" + str(path))
+
+    for edge in path["edges"]:
+        edge_trans = translate_edge(edge)
+        html_id = None
+        orientation = h_or_v(edge_trans)
+        if(orientation == "hrev"):
+            html_id = "hedge-" + str(edge_trans[1][0]) + "-" + str(edge_trans[1][1])
+        elif(orientation == "hfwd"):
+            html_id = "hedge-" + str(edge_trans[0][0]) + "-" + str(edge_trans[0][1])
+        elif(orientation == "vrev"):
+            html_id = "vedge-" + str(edge_trans[1][0]) + "-" + str(edge_trans[1][1])
+        elif(orientation == "vfwd"):
+            html_id = "vedge-" + str(edge_trans[0][0]) + "-" + str(edge_trans[0][1])
+        print("path edge transformed:" + orientation + html_id)
+        driver.find_element(By.ID, html_id).click()
+
+def h_or_v(edge):
+    if(edge[0][0] - edge[1][0] == 1):
+        return "hrev"
+    elif(edge[0][0] - edge[1][0] == -1):
+        return "hfwd"
+    elif(edge[0][1] - edge[1][1] == 1):
+        return "vrev"
+    elif(edge[0][1] - edge[1][1] == -1):
+        return "vfwd"
+    return "e"
+
+def translate_edge(edge):
+    edge_trans = []
+    for vertex in edge:
+        edge_trans.append(translate_vertex(vertex))
+    return edge_trans
+
+def translate_vertex(vertex):
+    return(vertex[0], args.n - vertex[1])
+
 # Main evaluator function
 async def evaluator(websocket, path):
-
     # Receiving initial communication from client with "name" and "role"
     init_msg = json.loads(await websocket.recv())
     print("Initial message: " + str(init_msg))
@@ -96,6 +136,8 @@ async def evaluator(websocket, path):
             # Validating path sent by tunneler client
             # If not a valid path, refreshing variables and waiting for another message
             if(path_validate(path_msg)):
+                if(args.view):
+                    draw_tunnel(path_msg)
                 tunneling_done = True
             else:
                 global vertices_dict, edge_list
