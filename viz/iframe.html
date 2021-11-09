@@ -62,8 +62,8 @@
                 <option>PvP</option>
             </select>
 
-            <select class="ui search dropdown" v-model="size">
-                <option v-for="sizeReal in sizes" v-bind:value="sizeReal">
+            <select class="ui search dropdown" id="grid-size" v-model="size">
+                <option v-for="sizeReal in sizes" v-bind:id="`size-${sizeReal}`" v-bind:value="sizeReal">
                     {{ sizeReal }}
                 </option>
             </select>
@@ -73,7 +73,7 @@
                 <option>Normal</option>
             </select>
 
-            <button class="large ui blue basic button" v-on:click="startGame()">Start Game! </button>
+            <button class="large ui blue basic button" id="start-game" v-on:click="startGame()">Start Game! </button>
         </div>
 
         <div v-if="showBetweenGameInfo()">
@@ -134,14 +134,14 @@
     <div id="gridWrapper">
         <template v-for = "m in size + 1" >
             <div class = hedgeWrapper>
-                <template v-for="n in size + 1">
-                    <div v-bind:class="nodes[m-1][n-1].class" v-on:click="nodeClick(nodes[m-1][n-1])"></div>
-                    <div v-if="n < size + 1" v-bind:class="hedges[m-1][n-1].class"  v-on:click="edgeClick(hedges[m-1][n-1])"></div>
+                <template v-for="(n, index) in size + 1" >
+                    <div v-bind:class="nodes[m-1][n-1].class" v-bind:id="`node-${m-1}-${n-1}`" v-on:click="nodeClick(nodes[m-1][n-1])"></div>
+                    <div v-if="n < size + 1" v-bind:class="hedges[m-1][n-1].class" v-bind:id="`hedge-${m-1}-${n-1}`" v-on:click="edgeClick(hedges[m-1][n-1])"></div>
                 </template>
             </div>
             <div v-if="m < size + 1" >
                 <div id="vedges" v-for="n in size + 1" class = vedgeWrapper>
-                    <div v-bind:class="vedges[m-1][n-1].class" v-on:click="edgeClick(vedges[m-1][n-1])"></div>
+                    <div v-bind:class="vedges[m-1][n-1].class" v-bind:id="`vedge-${m-1}-${n-1}`" v-on:click="edgeClick(vedges[m-1][n-1])"></div>
                     <div v-if="n < size + 1" class="left"></div>
                 </div>
             </div>

@@ -4,9 +4,12 @@ import argparse
 import json
 import time
 import math
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import os
 
 # Some default game params
-N_DEFAULT = 3
+N_DEFAULT = 5
 K_DEFAULT = 9
 P_DEFAULT = 3
 HOSTNAME_DEFAULT = "127.0.0.1"
@@ -22,6 +25,7 @@ guesses_dict = {"edges": [], "vertices": []}
 time_tunneler = 0
 time_detector = 0
 tunneling_done = False
+driver = webdriver.Firefox(executable_path='../viz/geckodriver')
 
 # Main function
 async def main():
@@ -38,9 +42,15 @@ async def main():
     args = parser.parse_args()
     print("Done parsing args")
 
-    if(args.view):
-        print("Opening viz")
-        
+    print("Opening viz")
+    driver.get("file:///" + os.getcwd() + "/../viz/iframe.html")
+    driver.find_element(By.ID, "grid-size").click()
+    driver.find_element(By.ID, "size-" + str(args.n)).click()
+
+    driver.find_element(By.ID, "start-game").click()
+    driver.switch_to.alert.accept()
+    
+    exit()
 
     # Running evaluator forever
     async with websockets.serve(evaluator, args.host, args.port):
