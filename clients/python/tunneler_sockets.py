@@ -34,6 +34,6 @@ def tunnel_edges(params, result):
     # You can check the "tunneling_done" param of the "result" variable
 
     # Sample format for tunnel edges
-    sample_3x3 = ( [(0, 0), (0, 1)], [(0, 1), (1, 1)], [(1, 1), (1, 2)], [(1, 2), (2, 2)], [(2, 2), (2, 3)])
+    sample_3x3 = ( [(0, 0), (0, 1)], [(1, 1), (0, 1)], [(1, 1), (1, 2)], [(2, 2), (1, 2)], [(2, 2), (2, 3)], [(3, 3), (2, 3)], [(3, 3), (3, 4)])
     return sample_3x3
 asyncio.run(build_tunnel())

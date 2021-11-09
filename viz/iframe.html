@@ -135,13 +135,13 @@
         <template v-for = "m in size + 1" >
             <div class = hedgeWrapper>
                 <template v-for="(n, index) in size + 1" >
-                    <div v-bind:class="nodes[m-1][n-1].class" v-bind:id="`node-${m-1}-${n-1}`" v-on:click="nodeClick(nodes[m-1][n-1])"></div>
-                    <div v-if="n < size + 1" v-bind:class="hedges[m-1][n-1].class" v-bind:id="`hedge-${m-1}-${n-1}`" v-on:click="edgeClick(hedges[m-1][n-1])"></div>
+                    <div v-bind:class="nodes[m-1][n-1].class" v-bind:id="`node-${n-1}-${m-1}`" v-on:click="nodeClick(nodes[m-1][n-1])"></div>
+                    <div v-if="n < size + 1" v-bind:class="hedges[m-1][n-1].class" v-bind:id="`hedge-${n-1}-${m-1}`" v-on:click="edgeClick(hedges[m-1][n-1])"></div>
                 </template>
             </div>
             <div v-if="m < size + 1" >
                 <div id="vedges" v-for="n in size + 1" class = vedgeWrapper>
-                    <div v-bind:class="vedges[m-1][n-1].class" v-bind:id="`vedge-${m-1}-${n-1}`" v-on:click="edgeClick(vedges[m-1][n-1])"></div>
+                    <div v-bind:class="vedges[m-1][n-1].class" v-bind:id="`vedge-${n-1}-${m-1}`" v-on:click="edgeClick(vedges[m-1][n-1])"></div>
                     <div v-if="n < size + 1" class="left"></div>
                 </div>
             </div>
